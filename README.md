@@ -34,11 +34,15 @@ optional arguments:
 # 举例
 ```bash
 # demo 1. 将直接覆盖本地
-python mdPipe.py -i ./markdown 
+md_wash  ./markdown 
 
-# demo 2. 输出到其他文件
-python mdPipe.py -i ./markdown  -o ./output
+# demo 2. 仅清洗 hello.md, 
+#默认输出到  ./markdown/hello/hello.md 图片输出到 ./markdown/hello/assets
+md_wash  ./markdown/hello.md  -c
 
-# demo 3. 清洗 markdown
-python  mdPipe.py  -c  -r -i ./markdown -o ./markdown_washed
+# demo 3. 输出到其他文件
+md_wash  ./markdown -c -o ./output
+
+# demo 4. 清洗 markdown,包含子文件
+md_wash  -c  -r  ./markdown -o ./markdown_washed
 ```
