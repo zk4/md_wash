@@ -92,3 +92,6 @@ source:
 	echo "you need to manully source it"
 	echo ". env/bin/activate"
 	. env/bin/activate
+
+auto_version:
+	python version.py
