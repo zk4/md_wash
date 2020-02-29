@@ -53,14 +53,13 @@ def download_file(url,local_filename,timeout=10):
         logger.exception(identifier)
         
 
-def task(filename,output,assetname,ifuuid,copy):
-    if filename.split(".")[-1] not in ["md","markdown",'mdown']:
+def task(abspath,output,assetname,ifuuid,copy):
+    if abspath.split(".")[-1] not in ["md","markdown",'mdown']:
         return
     newfile=""
     # parse md  by line, extract {img url}
-    full_path = filename
-    logger.error(f'filename:{filename}')
-    logger.error(f'full_path:{full_path}')
+    full_path = abspath
+    logger.error(f'abspath:{abspath}')
     with open(full_path) as f:
         line=f.readline()
         while line:
@@ -76,7 +75,7 @@ def task(filename,output,assetname,ifuuid,copy):
                 else:
                     if copy:
                         # copy  file
-                        src = os.path.join(os.path.dirname(full_path),imgurl.strip())
+                        src = os.path.join(dirname(abspath),imgurl)
                         logger.info(f"{src} --> {local_filename}")
                         if os.path.isfile(src):
                             copyfile(os.path.join(os.path.dirname(full_path),imgurl.strip()), local_filename)
@@ -93,7 +92,7 @@ def task(filename,output,assetname,ifuuid,copy):
             line=f.readline()
 
          # save back to file
-        fullOutputPath=join(output,filename)
+        fullOutputPath=join(output,basename(abspath))
         os.makedirs(os.path.dirname(fullOutputPath), exist_ok=True)                    
         f = open(fullOutputPath, 'w')
         f.write(newfile)
@@ -110,7 +109,7 @@ def main(args):
     # not dir just one file
     if not os.path.isdir(inputsrc):
         filename = os.path.abspath(inputsrc)
-        output  =  join(".",dirname(inputsrc),basename(inputsrc).split(".")[0])
+        output  =  join(dirname(inputsrc),"..",basename(inputsrc).split(".")[0])
         logger.error(f'output:{output}')
         task(filename,output,assetname,ifuuid,copy)
     else:

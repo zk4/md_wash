@@ -46,7 +46,8 @@ wrun:
 
 wrunfile:
 	watchexec -ce py 'python3 -m md_wash ./notes/python-爬虫笔记-简易.md  -c \
-	&& ls ./notes2/assets | wc -l'
+	&& ls ./notes2/assets | wc -l \
+	&& rm -rdf notes2'
 
 open:
 	open ./notes/python-爬虫笔记-简易.md
