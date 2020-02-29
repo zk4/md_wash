@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
 from shutil import copyfile
-from os.path  import join
+from os.path  import join,basename
 # don`t remove this line
 setup_logging()
 
@@ -63,10 +63,10 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
         line=f.readline()
         while line:
             for t,imgurl in get_img_url(line):
-                ext = imgurl.split('/')[-1].split(".")[1]
-                short_img_name= (str(uuid.uuid4())+"."+ext ) if ifuuid else imgurl.split('/')[-1]
+                ext = basename(imgurl).split(".")[-1]
+                short_img_name= (str(uuid.uuid4())+"."+ext ) if ifuuid else basename(imgurl)
                 
-                local_filename =output+"/"+assetname+"/"+ short_img_name
+                local_filename =join(output,assetname,short_img_name)
                 os.makedirs(os.path.dirname(local_filename), exist_ok=True)                    
 
                 if t=="url":
@@ -82,7 +82,7 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
                             print("not found:",src)
 
 
-                line = line.replace(imgurl,"./"+assetname+"/"+ short_img_name)
+                line = line.replace(imgurl,join(".",assetname, short_img_name))
              
 
             # append new line to new markdown 
@@ -91,7 +91,7 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
             line=f.readline()
 
          # save back to file
-        fullOutputPath=output+"/"+filename
+        fullOutputPath=join(output,filename)
         os.makedirs(os.path.dirname(fullOutputPath), exist_ok=True)                    
         f = open(fullOutputPath, 'w')
         # print("save file in ",fullOutputPath)

@@ -44,6 +44,9 @@ wrun:
 	&& ls ./notes2/assets | wc -l \
 	&& rm -rdf notes2'
 
+open:
+	open ./notes/python-爬虫笔记-简易.md
+
 
 all: rm uninstall install run 
 
