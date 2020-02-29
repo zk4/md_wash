@@ -37,25 +37,26 @@ def download_file(url,local_filename,timeout=10):
     # auto make dir
     os.makedirs(os.path.dirname(leocal_filename), exist_ok=True)
     if os.path.exists(local_filename):
-        # print("img alread exists: ",local_filename)
+        # logger.info("img alread exists: ",local_filename)
         return 
 
     try:
-        print("requesting..",url)
+        logger.info(f"requesting.. {url}")
         with requests.get(url, stream=True,timeout=timeout) as r:
             # r.raise_for_status()
             with open(local_filename, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192): 
                     if chunk: # filter out keep-alive new chunks
                         f.write(chunk)
-            # print("write image to ",local_filename)
     except Exception as identifier:
-        print(url , "请求失败")
+        logger.info(f"{url}  请求失败")
+        logger.exception(identifier)
+        
 
 def task(filename,dirpath,output,assetname,ifuuid,copy):
     if filename.split(".")[-1] not in ["md","markdown",'mdown']:
         return
-    print("job:",join(dirpath,filename))
+    logger.info(f"job:{join(dirpath,filename)}")
     newfile=""
     # parse md  by line, extract {img url}
     full_path = join(dirpath,filename)
@@ -75,11 +76,11 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
                     if copy:
                         # copy  file
                         src = os.path.join(os.path.dirname(full_path),imgurl.strip())
-                        print(f"{src} --> {local_filename}")
+                        logger.info(f"{src} --> {local_filename}")
                         if os.path.isfile(src):
                             copyfile(os.path.join(os.path.dirname(full_path),imgurl.strip()), local_filename)
                         else:
-                            print("not found:",src)
+                            logger.info(f"not found: {src}")
 
 
                 line = line.replace(imgurl,join(".",assetname, short_img_name))
@@ -94,7 +95,6 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
         fullOutputPath=join(output,filename)
         os.makedirs(os.path.dirname(fullOutputPath), exist_ok=True)                    
         f = open(fullOutputPath, 'w')
-        # print("save file in ",fullOutputPath)
         f.write(newfile)
         f.close()
 
@@ -123,14 +123,14 @@ def main(args):
                     f = t.submit(task,filename,dirpath,output,assetname,ifuuid,copy)
                     # will block
                     if f.result():
-                        print(f.result())
+                        logger.info(f.result())
             else:
                 if dirpath == inputdir:
                     for filename in filenames:
                         f = t.submit(task,filename,dirpath,output,assetname,ifuuid,copy)
                         # will block
                         if f.result():
-                            print(f.result())
+                            logger.info(f.result())
 
 def entry_point():
     parser = createParse()
