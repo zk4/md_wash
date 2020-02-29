@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
 from shutil import copyfile
+from os.path  import join
 # don`t remove this line
 setup_logging()
 
@@ -31,9 +32,10 @@ def get_img_url(line):
                 comp= re.search(reg,line)
                 if comp:
                     yield "other",comp.groups(0)[0]
+
 def download_file(url,local_filename,timeout=10):
     # auto make dir
-    os.makedirs(os.path.dirname(local_filename), exist_ok=True)
+    os.makedirs(os.path.dirname(leocal_filename), exist_ok=True)
     if os.path.exists(local_filename):
         # print("img alread exists: ",local_filename)
         return 
@@ -53,10 +55,10 @@ def download_file(url,local_filename,timeout=10):
 def task(filename,dirpath,output,assetname,ifuuid,copy):
     if filename.split(".")[-1] not in ["md","markdown",'mdown']:
         return
-    print("job:",dirpath+"/"+filename)
+    print("job:",join(dirpath,filename))
     newfile=""
     # parse md  by line, extract {img url}
-    full_path = dirpath+"/"+filename
+    full_path = join(dirpath,filename)
     with open(full_path) as f:
         line=f.readline()
         while line:
@@ -73,7 +75,7 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
                     if copy:
                         # copy  file
                         src = os.path.join(os.path.dirname(full_path),imgurl.strip())
-                        print("{src} --> {local_filename}")
+                        print(f"{src} --> {local_filename}")
                         if os.path.isfile(src):
                             copyfile(os.path.join(os.path.dirname(full_path),imgurl.strip()), local_filename)
                         else:
@@ -100,11 +102,20 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
 
 def main(args):
     inputdir =  args.input
-    output  = args.output if  args.output else inputdir
+
     assetname   = args.assetname
     ifuuid   = args.uuid
     copy   = args.copy
+
+    # not dir just one file
+    # if not os.path.isdir(inputdir):
+    #     filename = inputdir
+    #     output  = args.output if  args.output else filename.split(".")[-1]
+    #     dirpath = "."
+    #     task(filename,dirpath,output,assetname,ifuuid,copy)
+    # else:
     with ThreadPoolExecutor(max_workers=10) as t: 
+        output  = args.output if  args.output else inputdir
         for (dirpath, dirnames, filenames) in os.walk(inputdir):
             
             if args.recursive:

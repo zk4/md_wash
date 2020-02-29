@@ -40,7 +40,10 @@ run:
 	python3 -m md_wash eat -c 2
 
 wrun:
-	watchexec -ce py 'python3 -m md_wash eat -c 2'
+	watchexec -ce py 'python3 -m md_wash ./notes -o ./notes2 -c \
+	&& ls ./notes2/assets | wc -l \
+	&& rm -rdf notes2'
+
 
 all: rm uninstall install run 
 
