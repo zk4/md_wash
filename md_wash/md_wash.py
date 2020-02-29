@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import uuid
 from shutil import copyfile
-from os.path  import join,basename
+from os.path  import join,basename,dirname
 # don`t remove this line
 setup_logging()
 
@@ -53,13 +53,14 @@ def download_file(url,local_filename,timeout=10):
         logger.exception(identifier)
         
 
-def task(filename,dirpath,output,assetname,ifuuid,copy):
+def task(filename,output,assetname,ifuuid,copy):
     if filename.split(".")[-1] not in ["md","markdown",'mdown']:
         return
-    logger.info(f"job:{join(dirpath,filename)}")
     newfile=""
     # parse md  by line, extract {img url}
-    full_path = join(dirpath,filename)
+    full_path = filename
+    logger.error(f'filename:{filename}')
+    logger.error(f'full_path:{full_path}')
     with open(full_path) as f:
         line=f.readline()
         while line:
@@ -101,36 +102,37 @@ def task(filename,dirpath,output,assetname,ifuuid,copy):
 
 
 def main(args):
-    inputdir =  args.input
-
-    assetname   = args.assetname
-    ifuuid   = args.uuid
-    copy   = args.copy
+    inputsrc  = args.input
+    assetname = args.assetname
+    ifuuid    = args.uuid
+    copy      = args.copy
 
     # not dir just one file
-    # if not os.path.isdir(inputdir):
-    #     filename = inputdir
-    #     output  = args.output if  args.output else filename.split(".")[-1]
-    #     dirpath = "."
-    #     task(filename,dirpath,output,assetname,ifuuid,copy)
-    # else:
-    with ThreadPoolExecutor(max_workers=10) as t: 
-        output  = args.output if  args.output else inputdir
-        for (dirpath, dirnames, filenames) in os.walk(inputdir):
-            
-            if args.recursive:
-                for filename in filenames:
-                    f = t.submit(task,filename,dirpath,output,assetname,ifuuid,copy)
-                    # will block
-                    if f.result():
-                        logger.info(f.result())
-            else:
-                if dirpath == inputdir:
+    if not os.path.isdir(inputsrc):
+        filename = os.path.abspath(inputsrc)
+        output  =  join(".",dirname(inputsrc),basename(inputsrc).split(".")[0])
+        logger.error(f'output:{output}')
+        task(filename,output,assetname,ifuuid,copy)
+    else:
+        with ThreadPoolExecutor(max_workers=10) as t: 
+            output  = args.output if  args.output else inputsrc
+            for (dirpath, dirnames, filenames) in os.walk(inputsrc):
+                
+                if args.recursive:
                     for filename in filenames:
-                        f = t.submit(task,filename,dirpath,output,assetname,ifuuid,copy)
+                        abspath = os.path.abspath(join(dirpath,filename))
+                        f = t.submit(task,abspath,output,assetname,ifuuid,copy)
                         # will block
                         if f.result():
                             logger.info(f.result())
+                else:
+                    if dirpath == inputsrc:
+                        for filename in filenames:
+                            abspath = os.path.abspath(join(dirpath,filename))
+                            f = t.submit(task,abspath,output,assetname,ifuuid,copy)
+                            # will block
+                            if f.result():
+                                logger.info(f.result())
 
 def entry_point():
     parser = createParse()
