@@ -53,14 +53,13 @@ def download_file(url,local_filename,timeout=10):
         logger.exception(identifier)
         
 
-def task(abspath,output,assetname,ifuuid,copy):
+def task(abspath,output,assetname,ifuuid,copy,assets_relative_path):
     if abspath.split(".")[-1] not in ["md","markdown",'mdown']:
         return
     newfile=""
     # parse md  by line, extract {img url}
-    full_path = abspath
-    logger.error(f'abspath:{abspath}')
-    with open(full_path) as f:
+    logger.info(f'abspath:{abspath}')
+    with open(abspath) as f:
         line=f.readline()
         while line:
             for t,imgurl in get_img_url(line):
@@ -78,12 +77,12 @@ def task(abspath,output,assetname,ifuuid,copy):
                         src = os.path.join(dirname(abspath),imgurl)
                         logger.info(f"{src} --> {local_filename}")
                         if os.path.isfile(src):
-                            copyfile(os.path.join(os.path.dirname(full_path),imgurl.strip()), local_filename)
+                            copyfile(os.path.join(os.path.dirname(abspath),imgurl.strip()), local_filename)
                         else:
                             logger.info(f"not found: {src}")
 
 
-                line = line.replace(imgurl,join(".",assetname, short_img_name))
+                line = line.replace(imgurl,join(assets_relative_path, ".",assetname, short_img_name))
              
 
             # append new line to new markdown 
@@ -101,26 +100,28 @@ def task(abspath,output,assetname,ifuuid,copy):
 
 
 def main(args):
-    inputsrc  = args.input
-    assetname = args.assetname
-    ifuuid    = args.uuid
-    copy      = args.copy
+    inputsrc             = args.input
+    assetname            = args.assetname
+    ifuuid               = args.uuid
+    copy                 = args.copy
+    assets_relative_path = args.assets_relative_path
+    output               = args.output or join(dirname(inputsrc),"..",basename(inputsrc).split(".")[0])
 
     # not dir just one file
     if not os.path.isdir(inputsrc):
         filename = os.path.abspath(inputsrc)
-        output  =  join(dirname(inputsrc),"..",basename(inputsrc).split(".")[0])
+        # output  =  
         logger.error(f'output:{output}')
-        task(filename,output,assetname,ifuuid,copy)
+        task(filename,output,assetname,ifuuid,copy,assets_relative_path)
     else:
         with ThreadPoolExecutor(max_workers=10) as t: 
-            output  = args.output if  args.output else inputsrc
+            # output  = args.output if  args.output else inputsrc
             for (dirpath, dirnames, filenames) in os.walk(inputsrc):
                 
                 if args.recursive:
                     for filename in filenames:
                         abspath = os.path.abspath(join(dirpath,filename))
-                        f = t.submit(task,abspath,output,assetname,ifuuid,copy)
+                        f = t.submit(task,abspath,output,assetname,ifuuid,copy,assets_relative_path)
                         # will block
                         if f.result():
                             logger.info(f.result())
@@ -128,7 +129,7 @@ def main(args):
                     if dirpath == inputsrc:
                         for filename in filenames:
                             abspath = os.path.abspath(join(dirpath,filename))
-                            f = t.submit(task,abspath,output,assetname,ifuuid,copy)
+                            f = t.submit(task,abspath,output,assetname,ifuuid,copy,assets_relative_path)
                             # will block
                             if f.result():
                                 logger.info(f.result())
@@ -143,6 +144,7 @@ def createParse():
     parser = argparse.ArgumentParser( formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('input', type=str, help='指定你 markdown 的目录,或者md 文件')
     parser.add_argument("-o",'--output', type=str,required=False, help='指定你 markdown 的输出目录, 默认覆盖原目录!')
+    parser.add_argument("-p",'--assets_relative_path', type=str,required=False,default=".", help='引用相对 assets 的其他路径, 常用于博客上传')
     parser.add_argument("-a",'--assetname', type=str,default="assets",required=False, help='指定你图片输出的目录名,默认叫 assets')
     parser.add_argument("-r",'--recursive',action='store_true', default=False,required=False, help='是否递归目录')
     parser.add_argument("-u",'--uuid',action='store_true', default=False,required=False, help='是否图片使用随机名,否则根据 url 结尾生成,有可能会有重名')

@@ -37,7 +37,8 @@ main:
 	python3 main.py eat -c 2
 
 run:
-	python3 -m md_wash eat -c 2
+	python3 -m md_wash  -c  -r  ~/bdcloud/notes/golang_最佳实践.md -o ./out
+
 
 wrun:
 	watchexec -ce py 'python3 -m md_wash ./notes -o ./notes2 -c \
